@@ -2,7 +2,7 @@
 import sys
 
 
-# Main method
+# Main function
 def main(filename):
     # Read entire file
     file_contents = open(filename, "r").read()
