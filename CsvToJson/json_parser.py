@@ -5,6 +5,7 @@ DIGIT_START_CHARACTERS = set("-0123456789")
 ESCAPABLE_CHARS = set("\"\\/bfnrtu")
 HEX_DIGITS = set("0123456789abcdefABCDEF")
 HD = "0123456789abcdef"
+VALUE_START_CHARS = "\"-0123456789[{tfn"
 
 
 # Main function
@@ -239,7 +240,42 @@ class JSONParser(object):
                                      self.linestart,
                                      pos,
                                      self.str)
-        #TODO: finish object parser
+        obj = {}
+        pos += 1
+        key = ""
+        value = None
+
+        while self.str[pos] != "}":
+            self.clear_whitespace(pos)
+
+            if pos >= len(self.str):
+                raise JSONParseException("Unexpected end of file",
+                                         self.linenum,
+                                         self.linestart,
+                                         pos,
+                                         self.str)
+
+            if self.str[pos] == "\"":
+                pos, key = self.parse_string(pos)
+
+            elif self.str[pos] == ":":
+                pos += 1
+
+            elif self.str[pos] in VALUE_START_CHARS:
+                pos, value = self.parse_value(pos)
+
+            elif self.str[pos] == ",":
+                obj[key] = value
+
+            else:
+                raise JSONParseException("Unexpected character in JSON object",
+                                         self.linenum,
+                                         self.linestart,
+                                         pos,
+                                         self.str)
+
+        obj[key] = value
+        return pos, obj
 
     def parse_value(self, pos):
         pos = self.clear_whitespace(pos)
