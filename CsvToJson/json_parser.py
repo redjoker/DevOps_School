@@ -258,7 +258,7 @@ class JSONParser(object):
             if self.str[pos] == "\"":
                 pos, key = self.parse_string(pos)
 
-            elif self.str[pos] == ":":
+            elif self.str[pos] in ":\t\n\r ":
                 pos += 1
 
             elif self.str[pos] in VALUE_START_CHARS:
@@ -266,16 +266,14 @@ class JSONParser(object):
 
             elif self.str[pos] == ",":
                 obj[key] = value
+                key == ""
+                value = None
 
-            else:
-                raise JSONParseException("Unexpected character in JSON object",
-                                         self.linenum,
-                                         self.linestart,
-                                         pos,
-                                         self.str)
+            elif self.str[pos] == "}":
+                obj[key] = value
+                return pos, obj
 
-        obj[key] = value
-        return pos, obj
+
 
     def parse_value(self, pos):
         pos = self.clear_whitespace(pos)
@@ -313,7 +311,7 @@ class JSONParser(object):
 
 if __name__ == "__main__":
     j = JSONParser()
-    j.str = "[\"Hello \\\"World\\\" \\b \\u0050 \",\"Normal string\",true]"
+    j.str = "{\"Hello \\\"World\\\": true,\"Normal string\": true}"
     print(j.parse_value(0))
 
     #j = JSONParser()
