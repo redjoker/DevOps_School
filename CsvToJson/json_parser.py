@@ -472,10 +472,6 @@ if __name__ == "__main__":
     j.str = "{\"Hello \\\"World\\\"\": true,\"Normal string\": [-12.123E-20,true, false, \"true\"]}"
     print(j.parse_value(0))
 
-    #j = JSONParser()
-    #j.str = "["
-    #print(j.parse_value(0))
-
     # if len(sys.argv) != 2:
     #    print("USAGE: {} <filename_to_read.json>".format(sys.argv[0]))
     #    sys.exit(-1)
