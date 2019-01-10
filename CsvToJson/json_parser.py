@@ -5,7 +5,8 @@ DIGIT_START_CHARACTERS = set("-0123456789")
 ESCAPABLE_CHARS = set("\"\\/bfnrtu")
 HEX_DIGITS = set("0123456789abcdefABCDEF")
 HD = "0123456789abcdef"
-VALUE_START_CHARS = "\"-0123456789[{tfn"
+DIGITS = set("0123456789")
+POSITIVE_DIGITS = set("123456789")
 
 
 # Main function
@@ -245,8 +246,8 @@ class JSONParser(object):
         key = ""
         value = None
 
-        while self.str[pos] != "}":
-            self.clear_whitespace(pos)
+        while True:
+            pos = self.clear_whitespace(pos)
 
             if pos >= len(self.str):
                 raise JSONParseException("Unexpected end of file",
@@ -258,21 +259,177 @@ class JSONParser(object):
             if self.str[pos] == "\"":
                 pos, key = self.parse_string(pos)
 
-            elif self.str[pos] in ":\t\n\r ":
+                pos = self.clear_whitespace(pos)
+
+                if self.str[pos] == ":":
+                    pos += 1
+
+                    pos = self.clear_whitespace(pos)
+
+                    pos, value = self.parse_value(pos)
+
+                    obj[key] = value
+
+                    pos = self.clear_whitespace(pos)
+
+                    if self.str[pos] == "}":
+                        return pos + 1, obj
+
+                    elif self.str[pos] == ",":
+                        pos += 1
+                        continue
+
+                    else:
+                        raise JSONParseException("Expected ',' or '}', got '{}'".format(self.str[pos]),
+                                         self.linenum,
+                                         self.linestart,
+                                         pos,
+                                         self.str)
+
+                else:
+                    raise JSONParseException("Expected ':', got '{}'".format(self.str[pos]),
+                                             self.linenum,
+                                             self.linestart,
+                                             pos,
+                                             self.str)
+            elif self.str[pos] == "}":
+                return pos + 1, obj
+
+            else:
+                raise JSONParseException("Expected '\"', got '{}'".format(self.str[pos]),
+                                             self.linenum,
+                                             self.linestart,
+                                             pos,
+                                             self.str)
+
+    def parse_number(self, pos):
+        if pos >= len(self.str):
+            raise JSONParseException("Unexpected end of file",
+                                     self.linenum,
+                                     self.linestart,
+                                     pos,
+                                     self.str)
+
+        if self.str[pos] not in DIGIT_START_CHARACTERS:
+            raise JSONParseException("Invalid number",
+                                     self.linenum,
+                                     self.linestart,
+                                     pos,
+                                     self.str)
+
+        numstring = ""
+        has_decimal = False
+        has_exponent = False
+
+        while True:
+            if self.str[pos] in "-+":
+                numstring += self.str[pos]
                 pos += 1
 
-            elif self.str[pos] in VALUE_START_CHARS:
-                pos, value = self.parse_value(pos)
+                if pos >= len(self.str):
+                    raise JSONParseException("Unexpected end of file",
+                                             self.linenum,
+                                             self.linestart,
+                                             pos,
+                                             self.str)
 
-            elif self.str[pos] == ",":
-                obj[key] = value
-                key == ""
-                value = None
+                if self.str[pos] not in DIGITS:
+                    raise JSONParseException("Invalid number",
+                                             self.linenum,
+                                             self.linestart,
+                                             pos,
+                                             self.str)
 
-            elif self.str[pos] == "}":
-                obj[key] = value
-                return pos, obj
+            elif self.str[pos] == "0" and (numstring == "" or numstring == "-"):
+                numstring += self.str[pos]
+                pos += 1
 
+                if pos >= len(self.str):
+                    raise JSONParseException("Unexpected end of file",
+                                             self.linenum,
+                                             self.linestart,
+                                             pos,
+                                             self.str)
+
+                if self.str[pos] in DIGITS:
+                    raise JSONParseException("Leading zeros not allowed",
+                                             self.linenum,
+                                             self.linestart,
+                                             pos,
+                                             self.str)
+
+                elif self.str[pos] not in ".eE":
+                    return pos, float(numstring)
+
+            elif self.str[pos] in POSITIVE_DIGITS and (numstring == "" or numstring == "-"):
+                numstring += self.str[pos]
+                pos += 1
+
+            elif self.str[pos] in DIGITS:
+                numstring += self.str[pos]
+                pos += 1
+
+            elif self.str[pos] == ".":
+                if has_decimal:
+                    raise JSONParseException("Invalid number, two decimal points",
+                                             self.linenum,
+                                             self.linestart,
+                                             pos,
+                                             self.str)
+                else:
+                    numstring += self.str[pos]
+                    has_decimal = True
+                    pos += 1
+
+                    if pos >= len(self.str):
+                        raise JSONParseException("Unexpected end of file",
+                                                 self.linenum,
+                                                 self.linestart,
+                                                 pos,
+                                                 self.str)
+
+                    if self.str[pos] not in DIGITS:
+                        raise JSONParseException("Invalid number, malformed decimal",
+                                                 self.linenum,
+                                                 self.linestart,
+                                                 pos,
+                                                 self.str)
+
+            elif self.str[pos] == "e" or self.str[pos] == "E":
+                if has_exponent:
+                    raise JSONParseException("Invalid number, two exponents",
+                                             self.linenum,
+                                             self.linestart,
+                                             pos,
+                                             self.str)
+                else:
+                    numstring += self.str[pos]
+                    has_exponent = True
+                    pos += 1
+
+                    if pos >= len(self.str):
+                        raise JSONParseException("Unexpected end of file",
+                                                 self.linenum,
+                                                 self.linestart,
+                                                 pos,
+                                                 self.str)
+
+                    if self.str[pos] not in "-+0123456789":
+                        raise JSONParseException("Invalid number, malformed exponent",
+                                                 self.linenum,
+                                                 self.linestart,
+                                                 pos,
+                                                 self.str)
+
+            elif pos >= len(self.str):
+                raise JSONParseException("Unexpected end of file",
+                                     self.linenum,
+                                     self.linestart,
+                                     pos,
+                                     self.str)
+
+            else:
+                return pos, float(numstring)
 
 
     def parse_value(self, pos):
@@ -311,7 +468,7 @@ class JSONParser(object):
 
 if __name__ == "__main__":
     j = JSONParser()
-    j.str = "{\"Hello \\\"World\\\": true,\"Normal string\": true}"
+    j.str = "{\"Hello \\\"World\\\"\": true,\"Normal string\": [-12.123E-20,true, false, \"true\"]}"
     print(j.parse_value(0))
 
     #j = JSONParser()
