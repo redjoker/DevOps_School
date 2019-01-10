@@ -460,6 +460,7 @@ class JSONParser(object):
 
         else:
             raise JSONParseException("Invalid value",
+
                                      self.linenum,
                                      self.linestart,
                                      pos,
