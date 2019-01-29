@@ -9,12 +9,18 @@ def factorial(n):
     return factorials[n]
 
 
-def multinomial_coeff(n, x, y):
-    return factorial(n)/(factorial(x)*factorial(y))
+def multinomial_coeff(n, m):
+    num = factorial(n)
+    den = 1
+
+    for i in m:
+        den *= factorial(i)
+
+    return num / den
 
 
-def grid_paths(x = 1):
-    return multinomial_coeff(2*x, x, x)
+def grid_paths(x=0, y=0):
+    return multinomial_coeff(x * y, [x, y])
 
 
 def main():
