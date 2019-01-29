@@ -20,11 +20,11 @@ def multinomial_coeff(n, m):
 
 
 def grid_paths(x=0, y=0):
-    return multinomial_coeff(x * y, [x, y])
+    return multinomial_coeff(x + y, [x, y])
 
 
 def main():
-    print(grid_paths(20))
+    print(grid_paths(20, 20))
 
 
 if __name__ == '__main__':
