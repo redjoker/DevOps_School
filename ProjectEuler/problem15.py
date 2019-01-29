@@ -19,12 +19,12 @@ def multinomial_coeff(n, m):
     return num / den
 
 
-def grid_paths(x=0, y=0):
-    return multinomial_coeff(x + y, [x, y])
+def grid_paths(m=[0, 0]):
+    return int(multinomial_coeff(sum(m), m))
 
 
 def main():
-    print(grid_paths(20, 20))
+    print(grid_paths([20, 20]))
 
 
 if __name__ == '__main__':
