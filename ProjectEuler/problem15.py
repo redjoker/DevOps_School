@@ -16,15 +16,23 @@ def multinomial_coeff(n, m):
     for i in m:
         den *= factorial(i)
 
-    return num / den
+    try:
+        out = num / den
+    except OverflowError:
+        den = ""
+        for i in m:
+            den += str.format("{}!", i)
+        out = str.format("{}!/({})", n, den)
+
+    return out
 
 
 def grid_paths(m=[0, 0]):
-    return int(multinomial_coeff(sum(m), m))
+    return multinomial_coeff(sum(m), m)
 
 
 def main():
-    print(grid_paths([20, 20]))
+    print(grid_paths([100, 100, 100, 100, 100]))
 
 
 if __name__ == '__main__':
