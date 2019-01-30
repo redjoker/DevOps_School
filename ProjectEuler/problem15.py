@@ -32,7 +32,7 @@ def grid_paths(m=[0, 0]):
 
 
 def main():
-    print(grid_paths([100, 100, 100, 100, 100]))
+    print(grid_paths([20, 20]))
 
 
 if __name__ == '__main__':
